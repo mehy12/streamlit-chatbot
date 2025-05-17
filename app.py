@@ -1,39 +1,44 @@
 import streamlit as st
-
-# ✅ MUST be the very first Streamlit command
-st.set_page_config(page_title="Bushiee – Meesam's Personal AI 🤖", layout="centered")
-
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# Title and intro
-st.title("🤖 Bushiee – Meesam's Personal AI")
-st.markdown("Welcome! My name is **Bushiee**. How can I help you today?")
+# ✅ MUST be the first Streamlit command
+st.set_page_config(page_title="Bushiee – Meesam's Personal AI 🤖", layout="centered")
 
-# Securely get API key
-os.environ['GOOGLE_API_KEY'] = st.secrets["GOOGLE_API_KEY"]
+# 🌟 Sidebar for branding
+with st.sidebar:
+    st.title("🤖 Bushiee")
+    st.markdown("Welcome to Meesam’s personal AI assistant!")
+    st.markdown("---")
+    if st.button("🧹 Clear Chat"):
+        st.session_state.chat_history = []
+        st.experimental_rerun()
 
-# Initialize the Gemini model
-llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
-
-# Chat history in session state
+# 💬 Load chat history
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# User input
-user_input = st.text_input("You:", placeholder="Type your message here...")
+# 🔐 Load API key
+os.environ['GOOGLE_API_KEY'] = st.secrets["GOOGLE_API_KEY"]
+
+# 🤖 Initialize LLM
+llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
+
+# 💬 Display conversation history
+for role, message in st.session_state.chat_history:
+    with st.chat_message("user" if role == "You" else "assistant"):
+        st.markdown(message)
+
+# ⌨️ Chat input at bottom
+user_input = st.chat_input("Type your message...")
 
 if user_input:
-    # Save user input
+    # Show user message
+    st.chat_message("user").markdown(user_input)
     st.session_state.chat_history.append(("You", user_input))
 
-    # Get response from LLM
-    response = llm.invoke(user_input)
-    st.session_state.chat_history.append(("AI", response.content))
-
-# Display chat history
-for role, message in st.session_state.chat_history:
-    if role == "You":
-        st.markdown(f"**👤 You:** {message}")
-    else:
-        st.markdown(f"**🤖 Bushiee:** {message}")
+    # Call Gemini model
+    with st.chat_message("assistant"):
+        response = llm.invoke(user_input)
+        st.markdown(response.content)
+        st.session_state.chat_history.append(("AI", response.content))
